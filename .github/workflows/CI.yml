@@ -16,7 +16,7 @@ jobs:
     strategy:
       matrix:
         rust:
-          - 1.53.0
+          - stable
     steps:
       - name: Checkout sources
         uses: actions/checkout@v2
@@ -32,39 +32,13 @@ jobs:
         with:
           command: check
 
-   fmt:
-    name: Rustfmt
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        rust:
-          - 1.53.0
-    steps:
-      - name: Checkout sources
-        uses: actions/checkout@v2
-
-      - name: Install toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: ${{ matrix.rust }}
-          override: true
-
-      - name: Install rustfmt
-        run: rustup component add rustfmt
-
-      - name: Run cargo fmt
-        uses: actions-rs/cargo@v1
-        with:
-          command: fmt
-          args: --all -- --check
-
    clippy:
     name: Clippy
     runs-on: ubuntu-latest
     strategy:
       matrix:
         rust:
-          - 1.53.0
+          - stable
     steps:
       - name: Checkout sources
         uses: actions/checkout@v2
@@ -83,13 +57,24 @@ jobs:
         with:
           command: clippy
           args: -- -D warnings
+
+   security_audit:
+    runs-on: ubuntu-latest
+    steps:
+     - name: Checkout sources
+       uses: actions/checkout@v2
+     - name: Security Audit
+       uses: actions-rs/audit-check@v1
+       with:
+         token: ${{ secrets.GITHUB_TOKEN }}
+
    build:
-    name: Release build
+    name: build
     runs-on: ubuntu-latest
     strategy:
       matrix:
         rust:
-            - 1.53.0
+            - stable
         target:
           - x86_64-unknown-linux-gnu
           - x86_64-pc-windows-gnu
