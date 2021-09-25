@@ -1,0 +1,103 @@
+name: CI-Release
+
+on:
+    push:
+        tags:
+            - '*'
+
+env:
+    CARGO_TERM_COLOR: always
+
+jobs:
+    check:
+        name: Check
+        runs-on: ubuntu-latest
+        strategy:
+            matrix:
+                rust:
+                    - stable
+        steps:
+            - name: Checkout sources
+              uses: actions/checkout@v2
+
+            - name: Install toolchain
+              uses: actions-rs/toolchain@v1
+              with:
+                  toolchain: ${{ matrix.rust }}
+                  override: true
+
+            - name: Run cargo check
+              uses: actions-rs/cargo@v1
+              with:
+                  command: check
+
+    clippy:
+        name: Clippy
+        runs-on: ubuntu-latest
+        strategy:
+            matrix:
+                rust:
+                    - stable
+        steps:
+            - name: Checkout sources
+              uses: actions/checkout@v2
+
+            - name: Install toolchain
+              uses: actions-rs/toolchain@v1
+              with:
+                  toolchain: ${{ matrix.rust }}
+                  override: true
+
+            - name: Install clippy
+              run: rustup component add clippy
+
+            - name: Run cargo clippy
+              uses: actions-rs/cargo@v1
+              with:
+                  command: clippy
+                  args: -- -D warnings
+    security_audit:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout sources
+              uses: actions/checkout@v2
+            - name: Security Audit
+              uses: actions-rs/audit-check@v1
+              with:
+                token: ${{ secrets.GITHUB_TOKEN }}
+    build_release:
+        name: release
+        runs-on: ubuntu-latest
+        strategy:
+            matrix:
+                rust:
+                    - stable
+                - target: x86_64-unknown-linux-gnu
+                - target: x86_64-pc-windows-gnu
+                  archive: .exe
+        steps:
+            - uses: actions/checkout@v2
+            - uses: actions-rs/toolchain@v1
+              with:
+                  toolchain: stable
+                  target: ${{ matrix.target }}
+                  override: true
+            - uses: actions-rs/cargo@v1
+              with:
+                  use-cross: true
+                  command: build
+                  args: --release --target=${{ matrix.target }}
+            - uses: actions/create-release@v1
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              with:
+                  tag_name: ${{ github.ref }}
+                  release_name: Release ${{ github.ref }}
+                  draft: false
+                  prerelease: false
+            - uses: actions/upload-release-asset@v1
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              with:
+                  upload_url: ${{ steps.create_release.outputs.upload_url }}
+                  asset_path: target/${{ matrix.target }}/release/deps/shred{{matrix.archive}}
