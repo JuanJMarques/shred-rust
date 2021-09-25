@@ -1,7 +1,7 @@
 # shred-rust
 An implementation of shred command in rust.
 
-[![Build Status][bi]][bl] ![MIT/Apache][li]  ![LoC][lo]
+[![Build Status][bi]] ![MIT/Apache][li]  ![LoC][lo]
 
 [bi]: https://github.com/JuanJMarques/shred-rust/actions/workflows/CI.yml/badge.svg
 [li]: https://img.shields.io/badge/license-MIT%2FApache-blue.svg
