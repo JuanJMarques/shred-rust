@@ -65,16 +65,17 @@ jobs:
               uses: actions-rs/audit-check@v1
               with:
                 token: ${{ secrets.GITHUB_TOKEN }}
-    build_release:
+    build_release_windows:
         name: release
         runs-on: ubuntu-latest
         strategy:
             matrix:
                 rust:
                   - stable
-                - target: x86_64-unknown-linux-gnu
-                - target: x86_64-pc-windows-gnu
-                  archive: .exe
+                target:
+                 - x86_64-pc-windows-gnu
+                archive:
+                 - .exe
         steps:
             - uses: actions/checkout@v2
             - uses: actions-rs/toolchain@v1
@@ -101,3 +102,38 @@ jobs:
               with:
                   upload_url: ${{ steps.create_release.outputs.upload_url }}
                   asset_path: target/${{ matrix.target }}/release/deps/shred{{matrix.archive}}
+    build_release_linux:
+        name: release
+        runs-on: ubuntu-latest
+        strategy:
+            matrix:
+                rust:
+                    - stable
+                target:
+                    - x86_64-unknown-linux-gnu
+        steps:
+            -   uses: actions/checkout@v2
+            -   uses: actions-rs/toolchain@v1
+                with:
+                    toolchain: stable
+                    target: ${{ matrix.target }}
+                    override: true
+            -   uses: actions-rs/cargo@v1
+                with:
+                    use-cross: true
+                    command: build
+                    args: --release --target=${{ matrix.target }}
+            -   uses: actions/create-release@v1
+                env:
+                    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                with:
+                    tag_name: ${{ github.ref }}
+                    release_name: Release ${{ github.ref }}
+                    draft: false
+                    prerelease: false
+            -   uses: actions/upload-release-asset@v1
+                env:
+                    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                with:
+                    upload_url: ${{ steps.create_release.outputs.upload_url }}
+                    asset_path: target/${{ matrix.target }}/release/deps/shred
