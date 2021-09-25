@@ -92,7 +92,7 @@ fn main() {
             buf.iter_mut().map(|x| *x = value).count();
         }
         file.seek(SeekFrom::Start(0)).map_err(|err| println!("{:?}", err)).ok();
-        file.write(buf.as_slice()).unwrap_or_else(|err| {
+        file.write_all(buf.as_slice()).unwrap_or_else(|err| {
             panic!("! {:?}", err);
         });
     }
@@ -107,7 +107,7 @@ fn main() {
         }
         buf.iter_mut().map(|x| *x = value).count();
         file.seek(SeekFrom::Start(0)).map_err(|err| println!("{:?}", err)).ok();
-        file.write(buf.as_slice()).unwrap_or_else(|err| {
+        file.write_all(buf.as_slice()).unwrap_or_else(|err| {
             panic!("! {:?}", err.kind());
         });
     }
@@ -119,19 +119,19 @@ fn main() {
         let dir = canonical.parent().unwrap();
 
         let filename = path.file_name()
-            .expect(format!("error getting the file name to remove from {:?}",
-                            path.to_str())
-                .as_str());
+            .unwrap_or_else(|| panic!("error getting the file name to remove from {:?}",
+                                      path.to_str()));
         let mut new_filename = (0..filename.len()).map(|_| "0").collect::<String>();
         let mut old_filepath = String::from(canonical.clone().as_os_str().to_str()
             .expect("error getting the canonical path form file"));
         let mut new_filepath: String = String::new();
-        while new_filename.len() > 0 {
+        while !new_filename.is_empty() {
             new_filepath.clear();
             new_filepath.push_str(&*(dir.as_os_str().to_str().unwrap().to_owned()
                 + MAIN_SEPARATOR.to_string().as_str()
                 + new_filename.as_str()));
-            fs::rename(Path::new(old_filepath.clone().as_str()), Path::new(&new_filepath))
+            fs::rename(Path::new(old_filepath.clone().as_str()),
+                       Path::new(&new_filepath))
                 .expect("error renaming the file");
             if verbose {
                 println!("{} renamed to {}", old_filepath, new_filepath);
@@ -140,7 +140,9 @@ fn main() {
             new_filename.pop();
         }
         fs::remove_file(Path::new(&new_filepath))
-            .expect(format!("error deleting the file {}", new_filepath).as_str());
+            .unwrap_or_else(|err| panic!("error deleting the file {}: {:?}",
+                                         new_filepath,
+                                         err.kind()));
         if verbose {
             println!("{} removed", new_filepath);
         }
