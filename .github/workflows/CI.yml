@@ -1,4 +1,4 @@
-name: Rust
+name: CI
 
 on:
   push:
@@ -16,7 +16,6 @@ jobs:
     strategy:
       matrix:
         rust:
-          - stable
           - 1.53.0
     steps:
       - name: Checkout sources
@@ -39,7 +38,6 @@ jobs:
     strategy:
       matrix:
         rust:
-          - stable
           - 1.53.0
     steps:
       - name: Checkout sources
@@ -66,7 +64,6 @@ jobs:
     strategy:
       matrix:
         rust:
-          - stable
           - 1.53.0
     steps:
       - name: Checkout sources
@@ -91,6 +88,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
+        rust:
+            - 1.53.0
         target:
           - x86_64-unknown-linux-gnu
           - x86_64-pc-windows-gnu
