@@ -15,7 +15,7 @@ jobs:
         strategy:
             matrix:
                 rust:
-                    - stable
+                  - stable
         steps:
             - name: Checkout sources
               uses: actions/checkout@v2
@@ -37,7 +37,7 @@ jobs:
         strategy:
             matrix:
                 rust:
-                    - stable
+                  - stable
         steps:
             - name: Checkout sources
               uses: actions/checkout@v2
@@ -71,7 +71,7 @@ jobs:
         strategy:
             matrix:
                 rust:
-                    - stable
+                  - stable
                 - target: x86_64-unknown-linux-gnu
                 - target: x86_64-pc-windows-gnu
                   archive: .exe
