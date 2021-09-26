@@ -18,12 +18,6 @@ use std::path::{Path, MAIN_SEPARATOR};
 /// # Examples
 ///
 /// ```
-/// use shred::files;
-///
-/// fn main(){
-///     assert_eq!(12,files::get_size_to_write(false,"684",12 as u64));
-///     assert_eq!(684 * 1024,files::get_size_to_write(true,"684k",12 as u64));
-/// }
 /// ```
 pub fn get_size_to_write(size_present: bool, size_str: &str, file_size: u64) -> u64 {
     if size_present {
