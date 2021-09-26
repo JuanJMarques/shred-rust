@@ -3,6 +3,28 @@ use std::fs::File;
 use std::io::{Seek, SeekFrom, Write};
 use std::path::{Path, MAIN_SEPARATOR};
 
+/// Returns the file described in `size_str` or in the `file_size` depending on the `size_present`
+/// flag.
+///
+/// # Arguments
+///
+/// * `size_present`: the flag indicating whether parse the size in the `file_str` arg or
+/// returning the `file_size` arg.
+/// * `size_str`:  the size to parse with or without a size suffix (k, m, g).
+/// * `file_size`: the file size in u64.
+///
+/// returns: u64
+///
+/// # Examples
+///
+/// ```
+/// use shred::files;
+///
+/// fn main(){
+///     assert_eq!(12,files::get_size_to_write(false,"684",12 as u64));
+///     assert_eq!(684 * 1024,files::get_size_to_write(true,"684k",12 as u64));
+/// }
+/// ```
 pub fn get_size_to_write(size_present: bool, size_str: &str, file_size: u64) -> u64 {
     if size_present {
         parse_size(size_str)
@@ -11,6 +33,29 @@ pub fn get_size_to_write(size_present: bool, size_str: &str, file_size: u64) -> 
     }
 }
 
+/// Deletes the files pointed by `path` argument by renaming it several times and then deleting it.
+///
+/// # Arguments
+///
+/// * `verbose`: flag for printing in console the steps.
+/// * `path`:  the path of the file to delete.
+///
+/// returns: ()
+///
+/// # Examples
+///
+/// ```
+/// use shred::files;
+/// use std::path::Path;
+///
+/// fn main() {
+///     // "foo.txt" exists.
+///     let path = Path::new("foo.txt");
+///     files::remove_file(false, &path);
+///     assert_eq!(false, path.exists())
+///
+/// }
+/// ```
 pub fn remove_file(verbose: bool, path: &Path) {
     let canonical = path
         .canonicalize()
@@ -58,6 +103,34 @@ pub fn remove_file(verbose: bool, path: &Path) {
     }
 }
 
+/// writes the content of `buf`param in the `file` starting at the beginning of the file.
+///
+/// # Arguments
+///
+/// * `file`: `the file to write.
+/// * `buf`:  `the data to write`
+///
+/// returns: ()
+///
+/// # Examples
+///
+/// ```
+/// use shred::files;
+/// use std::fs::File;
+/// use std::io::Read;
+/// use std::borrow::BorrowMut;
+///
+/// fn main() {
+///     let mut file = File::create("foo.txt")?;
+///     let size = 1024 as usize;
+///     let mut buf = vec![126 as u8; size];
+///     files::write_buffer(&mut file,&mut buf);
+///     let mut read_buff = vec![0 as u8; size];
+///     let bytes_read = file.read(read_buff.borrow_mut())?;
+///     assert_eq!(size, bytes_read);
+///     assert_eq!(write_buf, read_buff);
+/// }
+/// ```
 pub fn write_buffer(file: &mut File, buf: &mut Vec<u8>) {
     file.seek(SeekFrom::Start(0))
         .map_err(|err| println!("{:?}", err))
@@ -67,6 +140,18 @@ pub fn write_buffer(file: &mut File, buf: &mut Vec<u8>) {
     });
 }
 
+/// Parses the size writen in `size_str` and returns it as a u64.
+///
+/// # Arguments
+///
+/// * `size_str`: the size with the following regex "^\d+\[k|m|g|K|M|G\]*$"<br/>
+/// for example:
+/// - 524
+/// - 457k
+/// - 1247M
+/// - 9246789g
+///
+/// returns: u64 The parsed size of the string.
 fn parse_size(size_str: &str) -> u64 {
     let last_char: &str = size_str[size_str.len() - 1..size_str.len()].as_ref();
     let mut size = size_str[0..size_str.len() - 1]
@@ -93,8 +178,7 @@ fn parse_size(size_str: &str) -> u64 {
 
 #[cfg(test)]
 mod tests {
-
-    use crate::files::{parse_size, remove_file, write_buffer, get_size_to_write};
+    use crate::files::{get_size_to_write, parse_size, remove_file, write_buffer};
     use std::borrow::BorrowMut;
     use std::io::{Read, Seek, SeekFrom};
     use std::panic;
@@ -109,8 +193,8 @@ mod tests {
         assert_eq!(846 * 1024 * 1024 as u64, parse_size("846m"));
         assert_eq!(54638 * 1024 * 1024 * 1024 as u64, parse_size("54638G"));
         assert_eq!(54638 * 1024 * 1024 * 1024 as u64, parse_size("54638g"));
-        assert_eq!(12,get_size_to_write(false,"684",12 as u64));
-        assert_eq!(684,get_size_to_write(true,"684",12 as u64));
+        assert_eq!(12, get_size_to_write(false, "684", 12 as u64));
+        assert_eq!(684, get_size_to_write(true, "684", 12 as u64));
     }
 
     #[test]
