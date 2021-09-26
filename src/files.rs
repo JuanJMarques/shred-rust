@@ -80,8 +80,25 @@ pub fn remove_file(verbose: bool, path: &Path) {
         old_filepath = new_filepath.clone();
         new_filename.pop();
     }
-    fs::remove_file(Path::new(&new_filepath))
-        .unwrap_or_else(|err| panic!("error deleting the file {}: {:?}", new_filepath, err.kind()));
+
+    let path_to_be_removed = Path::new(&new_filepath);
+    path_to_be_removed.metadata().unwrap_or_else(|err| {
+        panic!("! {:?}", err.kind());
+    });
+    if path_to_be_removed.is_file() {
+        fs::remove_file(path_to_be_removed).unwrap_or_else(|err| {
+            panic!("error deleting the file {}: {:?}", new_filepath, err.kind())
+        });
+    } else if path_to_be_removed.is_dir() {
+        fs::remove_dir(path_to_be_removed).unwrap_or_else(|err| {
+            panic!("error deleting the file {}: {:?}", new_filepath, err.kind())
+        });
+    } else {
+        panic!(
+            "cannot find the type of the file {:?}",
+            path_to_be_removed.to_str()
+        )
+    }
     if verbose {
         println!("{} removed", new_filepath);
     }
