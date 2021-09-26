@@ -80,7 +80,7 @@ fn parse_size(size_str: &str) -> u64 {
             multiplier = 1024;
         } else if "m".eq_ignore_ascii_case(last_char) {
             multiplier = 1024 * 1024;
-        } else if "m".eq_ignore_ascii_case(last_char) {
+        } else if "g".eq_ignore_ascii_case(last_char) {
             multiplier = 1024 * 1024 * 1024;
         } else {
             panic!("Cannot parse the size value {:?}", size_str);

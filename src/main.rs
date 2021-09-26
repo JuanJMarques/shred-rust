@@ -110,13 +110,3 @@ fn main() {
         files::remove_file(verbose, path)
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use crate::main;
-
-    #[test]
-    fn it_works() {
-        main()
-    }
-}
