@@ -7,12 +7,10 @@ An implementation of shred command in rust.
 [li]: https://img.shields.io/badge/license-MIT%2FApache-blue.svg
 [lo]: https://tokei.rs/b1/github/JuanJMarques/shred-rust?category=code
 
-This is a version of [shred command] [shred-man] implemented in rust.
+This is a version of [shred command](https://linux.die.net/man/1/shred) implemented in rust.
 
 ## Shred
 Overwrite a file to hide its contents, and optionally delete it
-
-[shred-man]: https://linux.die.net/man/1/shred
 
 ## Build
 ```commandline
