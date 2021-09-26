@@ -13,7 +13,7 @@ use std::path::{Path, MAIN_SEPARATOR};
 /// * `size_str`:  the size to parse with or without a size suffix (k, m, g).
 /// * `file_size`: the file size in u64.
 ///
-/// returns: u64
+/// returns: the file size parsed
 ///
 /// # Examples
 ///
@@ -45,16 +45,6 @@ pub fn get_size_to_write(size_present: bool, size_str: &str, file_size: u64) -> 
 /// # Examples
 ///
 /// ```
-/// use shred::files;
-/// use std::path::Path;
-///
-/// fn main() {
-///     // "foo.txt" exists.
-///     let path = Path::new("foo.txt");
-///     files::remove_file(false, &path);
-///     assert_eq!(false, path.exists())
-///
-/// }
 /// ```
 pub fn remove_file(verbose: bool, path: &Path) {
     let canonical = path
@@ -115,21 +105,6 @@ pub fn remove_file(verbose: bool, path: &Path) {
 /// # Examples
 ///
 /// ```
-/// use shred::files;
-/// use std::fs::File;
-/// use std::io::Read;
-/// use std::borrow::BorrowMut;
-///
-/// fn main() {
-///     let mut file = File::create("foo.txt")?;
-///     let size = 1024 as usize;
-///     let mut buf = vec![126 as u8; size];
-///     files::write_buffer(&mut file,&mut buf);
-///     let mut read_buff = vec![0 as u8; size];
-///     let bytes_read = file.read(read_buff.borrow_mut())?;
-///     assert_eq!(size, bytes_read);
-///     assert_eq!(write_buf, read_buff);
-/// }
 /// ```
 pub fn write_buffer(file: &mut File, buf: &mut Vec<u8>) {
     file.seek(SeekFrom::Start(0))
