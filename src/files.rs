@@ -90,3 +90,58 @@ fn parse_size(size_str: &str) -> u64 {
     }
     size * multiplier
 }
+
+#[cfg(test)]
+mod tests {
+
+    use crate::files::{parse_size, remove_file, write_buffer, get_size_to_write};
+    use std::borrow::BorrowMut;
+    use std::io::{Read, Seek, SeekFrom};
+    use std::panic;
+    use tempfile::NamedTempFile;
+
+    #[test]
+    fn test_parse_size() {
+        assert_eq!(126 as u64, parse_size("126"));
+        assert_eq!(1234 * 1024 as u64, parse_size("1234K"));
+        assert_eq!(1234 * 1024 as u64, parse_size("1234k"));
+        assert_eq!(846 * 1024 * 1024 as u64, parse_size("846M"));
+        assert_eq!(846 * 1024 * 1024 as u64, parse_size("846m"));
+        assert_eq!(54638 * 1024 * 1024 * 1024 as u64, parse_size("54638G"));
+        assert_eq!(54638 * 1024 * 1024 * 1024 as u64, parse_size("54638g"));
+        assert_eq!(12,get_size_to_write(false,"684",12 as u64));
+        assert_eq!(684,get_size_to_write(true,"684",12 as u64));
+    }
+
+    #[test]
+    fn test_write_files() {
+        let mut temp_file = NamedTempFile::new().unwrap_or_else(|err| {
+            panic!("!cannot create tempFile {:?}", err.kind());
+        });
+        let file = temp_file.as_file_mut();
+        let size = 512 as usize;
+        let mut write_buf = vec![5 as u8; size];
+        write_buffer(file, &mut write_buf);
+        file.seek(SeekFrom::Start(0))
+            .unwrap_or_else(|err| panic!("{:?}", err));
+        let mut read_buff = vec![0 as u8; size];
+        let bytes_read = file.read(read_buff.borrow_mut()).unwrap();
+        assert_eq!(size, bytes_read);
+        assert_eq!(write_buf, read_buff);
+        temp_file.into_temp_path().close().unwrap_or_else(|err| {
+            format!("cannot delete temporary file cause: {:?}", err);
+        });
+    }
+
+    #[test]
+    fn test_delete_files() {
+        let temp_file = NamedTempFile::new().unwrap_or_else(|err| {
+            panic!("!cannot create tempFile {:?}", err.kind());
+        });
+        let mut temp_path = temp_file.into_temp_path();
+        let path = temp_path.borrow_mut();
+        remove_file(false, path);
+        let delete_result = temp_path.close();
+        assert!(delete_result.is_err());
+    }
+}
