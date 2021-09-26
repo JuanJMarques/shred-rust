@@ -68,20 +68,19 @@ fn main() {
     let remove = matches.is_present("remove");
     let write_zeroes = matches.is_present("zero");
     let verbose = matches.is_present("verbose");
-    let size_present = matches.is_present("size");
     let file_path_arg = matches.value_of("FILE");
     let file_path =
         file_path_arg.unwrap_or_else(|| panic!("Cannot parse file! {:?}", file_path_arg));
     let recursive = matches.is_present("recursive");
+    let size_str = matches.value_of("size").unwrap_or("-1");
     shred(
         file_path,
         times,
         remove,
         write_zeroes,
         verbose,
-        size_present,
         recursive,
-        matches.value_of("size").unwrap_or("0"),
+        size_str,
     )
 }
 
@@ -94,9 +93,8 @@ fn main() {
 /// * `remove`: the flag for deleting the file after the rewrites.
 /// * `write_zeroes`: flag for writing one more time after `times` withe zeroes.
 /// * `verbose`: flag for printing verbose messages on console.
-/// * `size_present`: flag for the use the parameter `size_str` or writing all the contents in the file.
 /// * `recursive`: flag for doing the process recursively (only for directories).
-/// * `size_str`: the size to write in str.
+/// * `size_str`: the size to write in str or "-1" for writing the entire file.
 ///
 /// returns: ()
 ///
@@ -111,10 +109,10 @@ fn shred(
     remove: bool,
     write_zeroes: bool,
     verbose: bool,
-    size_present: bool,
     recursive: bool,
     size_str: &str,
 ) {
+    let size_present = !"-1".eq_ignore_ascii_case(size_str);
     let path = Path::new(file_path);
     let file_metadata = path.metadata().unwrap_or_else(|err| {
         panic!("! {:?}", err.kind());
@@ -133,7 +131,6 @@ fn shred(
                 remove,
                 write_zeroes,
                 verbose,
-                size_present,
                 remove,
                 size_str,
             );
