@@ -24,21 +24,26 @@ cargo build --release
 shred 1.0.0
 
 USAGE:
-    shred [FLAGS] [OPTIONS] <FILE>
+    shred.exe [FLAGS] [OPTIONS] <FILES>...
 
 FLAGS:
-    -h, --help       Prints help information
-    -u, --remove     Truncate and remove file after overwriting.
-    -V, --version    Prints version information
-    -v, --verbose    Show verbose information about shredding progress.
-    -z, --zero       Add a final overwrite with zeros to hide shredding.
+    -h, --help         Prints help information
+    -r, --recursive    Recursively deletes the files in directories
+    -u, --remove       Truncate and remove file after overwriting.
+    -V, --version      Prints version information
+    -v, --verbose      Show verbose information about shredding progress.
+    -z, --zero         Add a final overwrite with zeros to hide shredding.
 
 OPTIONS:
     -s, --size <size>           Shred this many bytes (suffixes like K, M, G accepted).
-    -n, --iterations <times>    Overwrite N times instead of the default (3).
+    -t, --threads <threads>     Number of threads to execute in parallel [default: 1]
+    -n, --iterations <times>    Overwrite N times. [default: 3]
 
 ARGS:
-    <FILE>    Sets the file to use
+    <FILES>...    Sets the files to to shred
+
+Process finished with exit code 0
+
 ```
 ## Contribution
 

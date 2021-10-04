@@ -1,3 +1,3 @@
 pub mod files;
-pub mod utils;
 pub mod threadpool;
+pub mod utils;

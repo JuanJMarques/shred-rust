@@ -6,6 +6,7 @@ use std::thread;
 pub struct ThreadPool {
     workers: Vec<Worker>,
     sender: mpsc::Sender<Message>,
+    size: usize,
 }
 
 type Job = Box<dyn FnOnce() + Send + 'static>;
@@ -33,10 +34,18 @@ impl ThreadPool {
         let mut workers = Vec::with_capacity(size);
 
         for _ in 0..size {
-            workers.push(Worker::new( Arc::clone(&receiver)));
+            workers.push(Worker::new(Arc::clone(&receiver)));
         }
 
-        ThreadPool { workers, sender }
+        ThreadPool {
+            workers,
+            sender,
+            size,
+        }
+    }
+
+    pub fn size(&self) -> usize {
+        self.size
     }
 
     pub fn execute<F>(&self, f: F)
@@ -47,6 +56,14 @@ impl ThreadPool {
 
         self.sender.send(Message::NewJob(job)).unwrap();
     }
+
+    pub fn wait(&mut self) {
+        for worker in &mut self.workers {
+            if let Some(thread) = worker.thread.take() {
+                thread.join().unwrap();
+            }
+        }
+    }
 }
 
 impl Drop for ThreadPool {
@@ -55,11 +72,7 @@ impl Drop for ThreadPool {
             self.sender.send(Message::Terminate).unwrap();
         }
 
-        for worker in &mut self.workers {
-            if let Some(thread) = worker.thread.take() {
-                thread.join().unwrap();
-            }
-        }
+        self.wait();
     }
 }
 
