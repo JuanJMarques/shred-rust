@@ -87,15 +87,13 @@ jobs:
                 uses: actions-rs/audit-check@v1
                 with:
                     token: ${{ secrets.GITHUB_TOKEN }}
-    build_release:
-        name: release
-        runs-on: ubuntu-latest
+    build_release_windows:
+        name: release_windows
+        runs-on: windows-latest
         strategy:
             matrix:
                 rust:
                     - stable
-                target:
-                    - x86_64-pc-windows-gnu
                 archive:
                     - exe
         steps:
@@ -103,13 +101,11 @@ jobs:
             -   uses: actions-rs/toolchain@v1
                 with:
                     toolchain: stable
-                    target: ${{ matrix.target }}
                     override: true
             -   uses: actions-rs/cargo@v1
                 with:
-                    use-cross: true
                     command: build
-                    args: --release --target=${{ matrix.target }}
+                    args: --release
             -   uses: actions/create-release@v1
                 id: create_release
                 env:
@@ -124,6 +120,74 @@ jobs:
                     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
                 with:
                     upload_url: ${{ steps.create_release.outputs.upload_url }}
-                    asset_path: target/${{ matrix.target }}/release/shred.${{ matrix.archive }}
-                    asset_name: shred.${{ matrix.archive }}
+                    asset_path: target/release/shred.${{ matrix.archive }}
+                    asset_name: shred-windows.${{ matrix.archive }}
+                    asset_content_type: application/binary
+    build_release_linux:
+        name: release_windows
+        runs-on: ubuntu-latest
+        strategy:
+            matrix:
+                rust:
+                    - stable
+        steps:
+            -   uses: actions/checkout@v2
+            -   uses: actions-rs/toolchain@v1
+                with:
+                    toolchain: stable
+                    override: true
+            -   uses: actions-rs/cargo@v1
+                with:
+                    command: build
+                    args: --release
+            -   uses: actions/create-release@v1
+                id: create_release
+                env:
+                    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                with:
+                    tag_name: ${{ github.ref }}
+                    release_name: Release ${{ github.ref }}
+                    draft: false
+                    prerelease: false
+            -   uses: actions/upload-release-asset@v1
+                env:
+                    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                with:
+                    upload_url: ${{ steps.create_release.outputs.upload_url }}
+                    asset_path: target/release/shred
+                    asset_name: shred-linux
+                    asset_content_type: application/binary
+    build_release_macos:
+        name: release_windows
+        runs-on: macos-latest
+        strategy:
+            matrix:
+                rust:
+                    - stable
+        steps:
+            -   uses: actions/checkout@v2
+            -   uses: actions-rs/toolchain@v1
+                with:
+                    toolchain: stable
+                    override: true
+            -   uses: actions-rs/cargo@v1
+                with:
+                    command: build
+                    args: --release
+            -   uses: actions/create-release@v1
+                id: create_release
+                env:
+                    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                with:
+                    tag_name: ${{ github.ref }}
+                    release_name: Release ${{ github.ref }}
+                    draft: false
+                    prerelease: false
+            -   uses: actions/upload-release-asset@v1
+                env:
+                    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                with:
+                    upload_url: ${{ steps.create_release.outputs.upload_url }}
+                    asset_path: target/release/shred
+                    asset_name: shred-macos
                     asset_content_type: application/binary
