@@ -83,8 +83,6 @@ fn main() {
     let size_str = Arc::new(String::from(
         matches
             .value_of("size")
-            .map(|s| s)
-            .map(|s| s)
             .unwrap_or("-1"),
     ));
     let threads = matches
@@ -123,7 +121,7 @@ fn explore(file_path: &str, recursive: bool, sender: Sender<String>) {
     let file_metadata = path.metadata().unwrap_or_else(|err| {
         panic!("{}! {:?}", file_path, err.kind());
     });
-    let path_str = path.clone().to_str().unwrap();
+    let path_str = path.to_str().unwrap();
     if file_metadata.is_dir() && recursive {
         for entry in path.read_dir().unwrap() {
             explore(
