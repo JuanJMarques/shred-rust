@@ -1,11 +1,12 @@
+use clap::{App, Arg};
+use rand::Rng;
+use shred::files;
+use shred::threadpool::ThreadPool;
 use std::fs::OpenOptions;
 use std::path::Path;
-
-use clap::{App, Arg};
-
-use rand::Rng;
-
-use shred::files;
+use std::sync::mpsc;
+use std::sync::mpsc::Sender;
+use std::sync::Arc;
 
 mod utils;
 
@@ -17,7 +18,8 @@ fn main() {
                 .short("n")
                 .long("iterations")
                 .takes_value(true)
-                .help("Overwrite N times instead of the default (3)."),
+                .help("Overwrite N times.")
+                .default_value("3"),
         )
         .arg(
             Arg::with_name("remove")
@@ -45,7 +47,7 @@ fn main() {
                 .short("r")
                 .long("recursive")
                 .takes_value(false)
-                .help("Recursively deletes the files in a directory"),
+                .help("Recursively deletes the files in directories"),
         )
         .arg(
             Arg::with_name("size")
@@ -54,34 +56,83 @@ fn main() {
                 .takes_value(true)
                 .help("Shred this many bytes (suffixes like K, M, G accepted)."),
         )
-        .arg(Arg::from_usage(
-            " <FILE>              'Sets the file to use'",
-        ))
+        .arg(
+            Arg::with_name("threads")
+                .short("t")
+                .long("threads")
+                .takes_value(true)
+                .default_value("1")
+                .help("Number of threads to execute in parallel"),
+        )
+        .arg(
+            Arg::with_name("FILES")
+                .help("Sets the files to to shred")
+                .required(true)
+                .multiple(true),
+        )
         .get_matches();
     let times = matches
         .value_of("times")
-        .unwrap_or("3")
-        .parse::<i32>()
-        .unwrap_or_else(|err| {
-            panic!("! {:?}", err);
-        }) as u32;
+        .map(|s| s.parse::<u32>())
+        .unwrap()
+        .unwrap();
     let remove = matches.is_present("remove");
     let write_zeroes = matches.is_present("zero");
     let verbose = matches.is_present("verbose");
-    let file_path_arg = matches.value_of("FILE");
-    let file_path =
-        file_path_arg.unwrap_or_else(|| panic!("Cannot parse file! {:?}", file_path_arg));
     let recursive = matches.is_present("recursive");
-    let size_str = matches.value_of("size").unwrap_or("-1");
-    shred(
-        file_path,
-        times,
-        remove,
-        write_zeroes,
-        verbose,
-        recursive,
-        size_str,
-    )
+    let size_str = Arc::new(String::from(
+        matches
+            .value_of("size")
+            .unwrap_or("-1"),
+    ));
+    let threads = matches
+        .value_of("threads")
+        .map(|s| s.parse::<usize>())
+        .unwrap()
+        .unwrap();
+    if let Some(file_paths) = matches.values_of_lossy("FILES") {
+        let thread_pool: ThreadPool = ThreadPool::new(threads);
+        let (explorer_sender, explorer_receiver) = mpsc::channel();
+        for file_path in file_paths {
+            let sender = explorer_sender.clone();
+            thread_pool.execute(move || {
+                explore(file_path.as_str(), recursive, sender);
+            });
+        }
+        drop(explorer_sender);
+        for file in explorer_receiver {
+            let size_str = Arc::clone(&size_str);
+            thread_pool.execute(move || {
+                shred(
+                    file.as_str(),
+                    times,
+                    remove,
+                    write_zeroes,
+                    verbose,
+                    size_str.as_str(),
+                );
+            });
+        }
+    }
+}
+
+fn explore(file_path: &str, recursive: bool, sender: Sender<String>) {
+    let path = Path::new(file_path);
+    let file_metadata = path.metadata().unwrap_or_else(|err| {
+        panic!("{}! {:?}", file_path, err.kind());
+    });
+    let path_str = path.to_str().unwrap();
+    if file_metadata.is_dir() && recursive {
+        for entry in path.read_dir().unwrap() {
+            explore(
+                entry.unwrap().path().to_str().unwrap(),
+                recursive,
+                sender.clone(),
+            );
+        }
+    } else if file_metadata.is_file() {
+        sender.send(String::from(path_str)).unwrap()
+    }
 }
 
 /// rewrites and optionally deletes the file pointed by `file_path`.
@@ -109,33 +160,18 @@ fn shred(
     remove: bool,
     write_zeroes: bool,
     verbose: bool,
-    recursive: bool,
     size_str: &str,
 ) {
     let size_present = !"-1".eq_ignore_ascii_case(size_str);
     let path = Path::new(file_path);
     let file_metadata = path.metadata().unwrap_or_else(|err| {
-        panic!("! {:?}", err.kind());
+        panic!("{}! {:?}", file_path, err.kind());
     });
-    if file_metadata.is_dir() && !recursive {
+    if file_metadata.is_dir() {
         panic!("cannot shred directories without the recursive parameter. See help");
     }
-    if file_metadata.is_dir() {
-        for entry in path.read_dir().unwrap_or_else(|err| {
-            panic!("! {:?}", err.kind());
-        }) {
-            let sub_file = entry.unwrap();
-            shred(
-                sub_file.path().to_str().unwrap(),
-                times,
-                remove,
-                write_zeroes,
-                verbose,
-                remove,
-                size_str,
-            );
-        }
-    } else if file_metadata.is_file() {
+
+    if file_metadata.is_file() {
         let mut file = OpenOptions::new()
             .write(true)
             .open(path)
