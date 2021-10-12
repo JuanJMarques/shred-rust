@@ -100,7 +100,7 @@ jobs:
                 draft: false
                 prerelease: false
         outputs:
-            ouput: ${{ steps.create_release.outputs.upload_url }}
+            upload_url: ${{ steps.create_release.outputs.upload_url }}
     build_release_windows:
         name: release_windows
         runs-on: windows-latest
@@ -125,7 +125,7 @@ jobs:
                 env:
                     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
                 with:
-                    upload_url: ${{ needs.create_release.outputs.output }}
+                    upload_url: ${{ needs.create_release.outputs.upload_url }}
                     asset_path: target/release/shred.${{ matrix.archive }}
                     asset_name: shred-windows.${{ matrix.archive }}
                     asset_content_type: application/binary
@@ -151,7 +151,7 @@ jobs:
                 env:
                     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
                 with:
-                    upload_url: ${{ needs.create_release.outputs.output }}
+                    upload_url: ${{ needs.create_release.outputs.upload_url }}
                     asset_path: target/release/shred
                     asset_name: shred-linux
                     asset_content_type: application/binary
@@ -177,7 +177,7 @@ jobs:
                 env:
                     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
                 with:
-                    upload_url: ${{ needs.create_release.outputs.output }}
+                    upload_url: ${{ needs.create_release.outputs.upload_url }}
                     asset_path: target/release/shred
                     asset_name: shred-macos
                     asset_content_type: application/binary
