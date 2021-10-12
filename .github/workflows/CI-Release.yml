@@ -125,7 +125,7 @@ jobs:
                 env:
                     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
                 with:
-                    upload_url: ${{ needs.create_release.output }}
+                    upload_url: ${{ needs.create_release.outputs.output }}
                     asset_path: target/release/shred.${{ matrix.archive }}
                     asset_name: shred-windows.${{ matrix.archive }}
                     asset_content_type: application/binary
@@ -151,7 +151,7 @@ jobs:
                 env:
                     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
                 with:
-                    upload_url: ${{ needs.create_release.output }}
+                    upload_url: ${{ needs.create_release.outputs.output }}
                     asset_path: target/release/shred
                     asset_name: shred-linux
                     asset_content_type: application/binary
@@ -177,7 +177,7 @@ jobs:
                 env:
                     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
                 with:
-                    upload_url: ${{ needs.create_release.output }}
+                    upload_url: ${{ needs.create_release.outputs.output }}
                     asset_path: target/release/shred
                     asset_name: shred-macos
                     asset_content_type: application/binary
